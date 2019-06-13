@@ -1,0 +1,16 @@
+;Root Zone
+$TTL    60
+@       IN      SOA     root-seed.com. hostmaster.seed.com. (
+                              2         ; Serial
+                             60         ; Refresh
+                             60         ; Retry
+                             60         ; Expire
+                             60 )       ; Negative Cache TTL
+;
+@       IN      NS      a.root-seed.com.
+@       IN      A       10.0.5.2
+a.root-seed.com IN      A       10.0.5.2
+com.    IN      NS      a.gtld-seed.com
+a.gtld-seed.com IN      A       10.0.5.3
+10.in-addr.arpa.        IN      NS      a.root-seed.com.
+10.in-addr.arpa.        IN      NS      a.gtld-seed.com.
