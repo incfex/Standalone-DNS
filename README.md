@@ -91,7 +91,7 @@ Setup ifupdown
 ```
 source-directory /etc/network/interfaces.d
 
-allow-hotpulg eth0
+auto eth0
 iface eth0 inet dhcp
 ```
 Restart network interface
@@ -243,6 +243,10 @@ ns.team01.com.          60      IN      A       10.0.10.12
 Check bind9 status
 ```
 # systemctl status bind9
+```
+LXC Operation
+```
+# lxc stop --all
 ```
 
 
