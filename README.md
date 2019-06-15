@@ -188,12 +188,6 @@ Give root password (**_Not Safe_**)
 # Retype new password: toor
 ```
 
-Restart network interface
-```
-# ifdown eth0
-# ifup eth0
-```
-
 ### Bind9 Config
 
 Host .com Zone (File Content in bind9.conf.d)
@@ -236,6 +230,74 @@ ns.team01.com.          60      IN      A       10.0.10.12
 ;; MSG SIZE  rcvd: 104
 ```
 
+## LXC Setup Continued
+---
+### Network Setup
+Create the team server and assign it an IP address
+```
+# lxc init sadImg teamSvr
+# lxc network attach lxdbr0 teamSvr eth0
+# lxc config device set teamSvr eth0 ipv4.address 10.0.10.12
+```
+
+## team Server
+---
+### Environment Setup
+
+Start and Attach the team Server
+```
+# lxc start teamSvr
+# lxc exec teamSvr -- /bin/bash
+```
+
+Give root password (**_Not Safe_**)
+```
+# passwd
+# New password: toor
+# Retype new password: toor
+```
+
+### Bind9 Config
+
+Host .com Zone (File Content in bind9.conf.d)
+```
+# vim /etc/bind/db.team01.com
+# vim /etc/bind/db.10.0.10
+# vim /etc/bind/named.conf.default-zones
+# vim /etc/bind/named.conf.options
+```
+
+Restart bind9 and dig result
+```
+# service bind9 restart
+# dig @10.0.10.12 team01.com NS
+```
+```
+; <<>> DiG 9.11.5-P1-1ubuntu2.4-Ubuntu <<>> @10.0.10.12 team01.com NS
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 14199
+;; flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 2
+;; WARNING: recursion requested but not available
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+; COOKIE: 1bd0a4f1856ceb2dbf2aced75d052a384d887a2eefa22a68 (good)
+;; QUESTION SECTION:
+;team01.com.                    IN      NS
+
+;; ANSWER SECTION:
+team01.com.             60      IN      NS      ns.team01.com.
+
+;; ADDITIONAL SECTION:
+ns.team01.com.          60      IN      A       10.0.10.12
+
+;; Query time: 0 msec
+;; SERVER: 10.0.10.12#53(10.0.10.12)
+;; WHEN: Sat Jun 15 17:26:16 UTC 2019
+;; MSG SIZE  rcvd: 100
+```
 
 
 # Useful Commands
@@ -244,9 +306,16 @@ Check bind9 status
 ```
 # systemctl status bind9
 ```
+
 LXC Operation
 ```
 # lxc stop --all
+```
+
+Restart network interface
+```
+# ifdown eth0
+# ifup eth0
 ```
 
 
