@@ -6,6 +6,6 @@ options {
         dnssec-validation no;
         dump-file "/var/cache/bind/dump.db";
         query-source port 15551;
-        listen-on port 53 {10.0.10.10;};
+        listen-on port 53 {10.0.10.11;};
         auth-nxdomain no;
 };

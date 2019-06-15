@@ -1,0 +1,10 @@
+$TTL 60
+10.0.10.in-addr.arpa.   IN      SOA     a.gtld-seed.com.        hostmaster.seed.com. (
+                              2         ; Serial
+                             60         ; Refresh
+                             60         ; Retry
+                             60         ; Expire
+                             60 )       ; Negative Cache TTL
+;
+@       IN      NS      a.gtld-seed.com.
+11      IN      PTR     a.gtld-seed.com.

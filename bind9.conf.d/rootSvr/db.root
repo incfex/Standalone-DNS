@@ -8,9 +8,9 @@ $TTL    60
                              60 )       ; Negative Cache TTL
 ;
 @       IN      NS      a.root-seed.com.
-@       IN      A       10.0.5.2
-a.root-seed.com IN      A       10.0.5.2
-com.    IN      NS      a.gtld-seed.com
-a.gtld-seed.com IN      A       10.0.5.3
+@       IN      A       10.0.10.10
+a.root-seed.com. IN      A       10.0.10.10
+com.    IN      NS      a.gtld-seed.com.
+a.gtld-seed.com IN      A       10.0.10.11
 10.in-addr.arpa.        IN      NS      a.root-seed.com.
 10.in-addr.arpa.        IN      NS      a.gtld-seed.com.
