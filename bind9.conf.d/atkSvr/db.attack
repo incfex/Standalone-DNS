@@ -1,0 +1,11 @@
+;attack Zone
+$TTL    60
+@       IN      SOA     ns.attacker32.com. admin.attacker32.com. (
+                              2         ; Serial
+                             60         ; Refresh
+                             60         ; Retry
+                             60         ; Expire
+                             60 )       ; Negative Cache TTL
+;
+@       IN      NS      ns
+ns      IN      A       10.0.10.14

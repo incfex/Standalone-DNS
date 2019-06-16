@@ -1,0 +1,11 @@
+options {
+        directory "/var/cache/bind";
+        recursion no;
+        allow-query { any; };
+        dnssec-enable no;
+        dnssec-validation no;
+        dump-file "/var/cache/bind/dump.db";
+        query-source port 15551;
+        listen-on port 53 {10.0.10.14;};
+        auth-nxdomain no;
+};
