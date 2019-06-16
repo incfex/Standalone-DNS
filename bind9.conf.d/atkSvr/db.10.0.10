@@ -8,4 +8,4 @@ $TTL 60
 ;
 @       IN      NS      ns.attacker32.com.
 14      IN      PTR     ns.attacker32.com.
-14      IN      PTR     team01.com.
+;14      IN      PTR     team00.com.

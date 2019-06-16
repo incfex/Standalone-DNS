@@ -2,10 +2,6 @@ zone "attacker32.com" {
         type master;
         file "/etc/bind/db.attack";
 };
-zone "team01.com" {
-        type master;
-        file "/etc/bind/db.success";
-};
 zone "10.0.10.in-addr.arpa" {
         type master;
         file "/etc/bind/db.10.0.10";

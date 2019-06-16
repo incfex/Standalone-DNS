@@ -1,8 +1,4 @@
-zone "team01.com" {
-        type master;
-        file "/etc/bind/db.team01.com";
-};
-zone "10.0.10.in-addr.arpa"  {
-        type master;
-        file "/etc/bind/db.10.0.10";
-};
+#zone "10.0.10.in-addr.arpa"  {
+#        type master;
+#        file "/etc/bind/db.10.0.10";
+#};

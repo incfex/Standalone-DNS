@@ -6,28 +6,98 @@ Please follow step by step.
 
 # Getting Started
 
+## Host Machine Setup
+Install Components
+```
+# apt install -y ifupdown dnsutils
+```
+
+Disable systemd-resolved.service
+```
+# systemctl disable systemd-resolved.service
+# systemctl stop systemd-resolved
+# rm /etc/resolv.conf
+# echo "nameserver 1.1.1.1" > /etc/resolv.conf
+```
+
+Remove Ubuntu Crap
+```
+# apt -y purge netplan.io
+# rm -r /etc/netplan
+# apt -y purge networkd-dispatcher
+# apt -y autoremove
+```
+
+Setup ifupdown
+```
+# vim /etc/network/interfaces
+```
+```
+auto enp0s3
+iface enp0s3 inet dhcp
+```
+
+Restart network interface
+```
+# ifdown enp0s3
+# ifup enp0s3
+```
+
+Added hostname to hosts file
+```
+# echo "127.0.0.1        sad" >> /etc/hosts
+```
+
+
+
 ## LXC Setup
 ---
+```
+# lxd init
+Would you like to use LXD clustering? (yes/no) [default=no]:
+Do you want to configure a new storage pool? (yes/no) [default=yes]:
+Name of the new storage pool [default=default]: sadPool
+Name of the storage backend to use (btrfs, dir, lvm) [default=btrfs]: dir
+Would you like to connect to a MAAS server? (yes/no) [default=no]:
+Would you like to create a new local network bridge? (yes/no) [default=yes]:
+What should the new bridge be called? [default=lxdbr0]:
+What IPv4 address should be used? (CIDR subnet notation, “auto” or “none”) [default=auto]:
+What IPv6 address should be used? (CIDR subnet notation, “auto” or “none”) [default=auto]: none
+Would you like LXD to be available over the network? (yes/no) [default=no]:
+Would you like stale cached images to be updated automatically? (yes/no) [default=yes] no
+Would you like a YAML "lxd init" preseed to be printed? (yes/no) [default=no]: yes
+```
 
 ### Create new Ubuntu LXC image
+There are 2 (and more) ways to build a LXC image, choose the one you like.
+
+#### Method 1 LXD
+```
+# lxc init ubuntu:18.04 rootSvr
+```
+
+#### Method 2 DistroBuilder
 Follow [DistroBuilder](https://github.com/lxc/distrobuilder)
 
 Replace `cosmic` with `dingo` in `ubuntu.yaml`
 ```
-lxc image import lxd.tar.xz rootfs.squashfs --alias dingo
+# lxc image import lxd.tar.xz rootfs.squashfs --alias dingo
+# lxc init dingo rootSvr
 ```
+
 ### LXC Network Config
 Configure the internal network the containers are in.
 ```
 # lxc network edit lxdbr0
 ```
 ```
+. . .
 config:
   ipv4.address: 10.0.10.1/24
   ipv4.dhcp: "true"
   ipv4.nat: "true"
   ipv6.address: none
-description: ""
+description: "SAD Network"
 name: lxdbr0
 type: bridge
 used_by:
@@ -38,30 +108,34 @@ locations:
 - none
 ```
 
-Create the root server and assign it an IP address
-```
-# lxc init dingo rootSvr
-# lxc network attach lxdbr0 rootSvr eth0
-# lxc config device set rootSvr eth0 ipv4.address 10.0.10.10
-```
 Allow the Containers to access Internet
 ```
 # iptables -A POSTROUTING -t nat -j MASQUERADE
 ```
 
+
 ## Root Server
 ---
-### Environment Setup
+
+### Host Setup
+Create the root server and assign it an IP address
+```
+# lxc network attach lxdbr0 rootSvr eth0
+# lxc config device set rootSvr eth0 ipv4.address 10.0.10.10
+```
+
 Start and Attach the Root Server
 ```
 # lxc start rootSvr
 # lxc exec rootSvr -- /bin/bash
 ```
 
+### Guest Setup
 Give root password (**_Not Safe_**)
 ```
 # passwd
-# toor
+New password: toor
+Retype new password: toor
 ```
 
 Install Components
@@ -79,9 +153,10 @@ Disable systemd-resolved.service
 
 Remove Ubuntu Crap
 ```
-# apt purge netplan.io
-# apt purge networkd-dispatcher
-Maybe Netplan also needs to be removed?
+# apt purge -y netplan.io
+# rm -r /etc/netplan
+# apt purge -y networkd-dispatcher
+# apt -y autoremove
 ```
 
 Setup ifupdown
@@ -89,8 +164,6 @@ Setup ifupdown
 # vim /etc/network/interfaces
 ```
 ```
-source-directory /etc/network/interfaces.d
-
 auto eth0
 iface eth0 inet dhcp
 ```
@@ -126,7 +199,7 @@ Check error in named.conf
 Restart Bind9 and check result
 ```
 # service bind9 restart
-# dig @ 10.0.10.10 seed.com
+# dig @10.0.10.10 seed.com
 ```
 ```
 ; <<>> DiG 9.11.5-P1-1ubuntu2.4-Ubuntu <<>> @10.0.10.10 seed.com
@@ -155,15 +228,23 @@ a.gtld-seed.com.        60      IN      A       10.0.10.11
 ;; MSG SIZE  rcvd: 107
 ```
 
-### Query Redirect (TBD)
-
-## LXC Setup Continued
-### Generate Image
+## Generate Custom LXC Image
 Publish the root server as a image for future containers
 ```
 # lxc publish rootSvr --alias=sadImg --force
 ```
-### Network Setup
+Check the fingerprint of the vanilla ubuntu image
+```
+lxc image list
+```
+Remove the vanilla ubuntu image
+```
+lxc image delete <fingerprint>
+```
+
+## .com Server
+---
+### Host Setup
 Create the .com server and assign it an IP address
 ```
 # lxc init sadImg comSvr
@@ -171,21 +252,18 @@ Create the .com server and assign it an IP address
 # lxc config device set comSvr eth0 ipv4.address 10.0.10.11
 ```
 
-## .com Server
----
-### Environment Setup
-
 Start and Attach the .com Server
 ```
 # lxc start comSvr
 # lxc exec comSvr -- /bin/bash
 ```
 
+### Guest Setup
 Give root password (**_Not Safe_**)
 ```
 # passwd
-# New password: toor
-# Retype new password: toor
+New password: toor
+Retype new password: toor
 ```
 
 ### Bind9 Config
@@ -201,32 +279,32 @@ Host .com Zone (File Content in bind9.conf.d)
 Restart bind9 and dig result
 ```
 # service bind9 restart
-# dig @10.0.10.11 aaa.team01.com
+# dig @10.0.10.11 www.team00.com
 ```
 ```
-; <<>> DiG 9.11.5-P1-1ubuntu2.4-Ubuntu <<>> @10.0.10.11 aaa.team01.com
+; <<>> DiG 9.11.3-1ubuntu1.7-Ubuntu <<>> @10.0.10.11 www.team00.com
 ; (1 server found)
 ;; global options: +cmd
 ;; Got answer:
-;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 5522
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 26696
 ;; flags: qr rd; QUERY: 1, ANSWER: 0, AUTHORITY: 1, ADDITIONAL: 2
 ;; WARNING: recursion requested but not available
 
 ;; OPT PSEUDOSECTION:
 ; EDNS: version: 0, flags:; udp: 4096
-; COOKIE: 787cd1b368e3da571956de515d04529ecf6e344a677cd7dd (good)
+; COOKIE: 987751af326de166b7a877d55d05e18df330d864ae20902e (good)
 ;; QUESTION SECTION:
-;aaa.team01.com.                        IN      A
+;www.team00.com.                        IN      A
 
 ;; AUTHORITY SECTION:
-team01.com.             60      IN      NS      ns.team01.com.
+team00.com.             60      IN      NS      ns.team00.com.
 
 ;; ADDITIONAL SECTION:
-ns.team01.com.          60      IN      A       10.0.10.12
+ns.team00.com.          60      IN      A       10.0.10.12
 
 ;; Query time: 0 msec
 ;; SERVER: 10.0.10.11#53(10.0.10.11)
-;; WHEN: Sat Jun 15 02:06:22 UTC 2019
+;; WHEN: Sun Jun 16 06:28:29 UTC 2019
 ;; MSG SIZE  rcvd: 104
 ```
 
@@ -253,55 +331,62 @@ Start and Attach the team Server
 Give root password (**_Not Safe_**)
 ```
 # passwd
-# New password: toor
-# Retype new password: toor
+New password: toor
+Retype new password: toor
 ```
 
 ### Bind9 Config
 
 Host team Zone (File Content in bind9.conf.d)
 ```
-# vim /etc/bind/db.team01.com
+# mkdir /etc/bind/zones
 # vim /etc/bind/db.10.0.10
+# vim /etc/bind/zones/team00.com
+# vim /etc/bind/named.conf.team-zones
 # vim /etc/bind/named.conf.default-zones
 # vim /etc/bind/named.conf.options
+# echo 'include "/etc/bind/named.conf.team-zones";' >> /etc/bind/named.conf
 ```
 
 Restart bind9 and dig result
 ```
 # service bind9 restart
-# dig @10.0.10.12 team01.com NS
+# dig @10.0.10.12 www.team00.com
 ```
 ```
-; <<>> DiG 9.11.5-P1-1ubuntu2.4-Ubuntu <<>> @10.0.10.12 team01.com NS
+; <<>> DiG 9.11.3-1ubuntu1.7-Ubuntu <<>> @10.0.10.12 www.team00.com
 ; (1 server found)
 ;; global options: +cmd
 ;; Got answer:
-;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 14199
-;; flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 2
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 62817
+;; flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 1, ADDITIONAL: 2
 ;; WARNING: recursion requested but not available
 
 ;; OPT PSEUDOSECTION:
 ; EDNS: version: 0, flags:; udp: 4096
-; COOKIE: 1bd0a4f1856ceb2dbf2aced75d052a384d887a2eefa22a68 (good)
+; COOKIE: 84aabe9cd4392db49c76fcf15d05d6a4bf91ae842b91c4d0 (good)
 ;; QUESTION SECTION:
-;team01.com.                    IN      NS
+;www.team00.com.                        IN      A
 
 ;; ANSWER SECTION:
-team01.com.             60      IN      NS      ns.team01.com.
+www.team00.com.         60      IN      A       10.0.10.12
+
+;; AUTHORITY SECTION:
+team00.com.             60      IN      NS      ns.team00.com.
 
 ;; ADDITIONAL SECTION:
-ns.team01.com.          60      IN      A       10.0.10.12
+ns.team00.com.          60      IN      A       10.0.10.12
 
 ;; Query time: 0 msec
 ;; SERVER: 10.0.10.12#53(10.0.10.12)
-;; WHEN: Sat Jun 15 17:26:16 UTC 2019
-;; MSG SIZE  rcvd: 100
+;; WHEN: Sun Jun 16 05:41:56 UTC 2019
+;; MSG SIZE  rcvd: 120
 ```
 
-## LXC Setup Continued
+## Local Server
 ---
-### Network Setup
+
+### Host Setup
 Create the local server and assign it an IP address
 ```
 # lxc init sadImg locSvr
@@ -309,21 +394,18 @@ Create the local server and assign it an IP address
 # lxc config device set locSvr eth0 ipv4.address 10.0.10.13
 ```
 
-## local Server
----
-### Environment Setup
-
 Start and Attach the local Server
 ```
 # lxc start locSvr
 # lxc exec locSvr -- /bin/bash
 ```
 
+### Guest Setup
 Give root password (**_Not Safe_**)
 ```
 # passwd
-# New password: toor
-# Retype new password: toor
+New password: toor
+Retype new password: toor
 ```
 
 ### Bind9 Config
@@ -338,12 +420,39 @@ Host local Zone (File Content in bind9.conf.d)
 Restart bind9 and dig result
 ```
 # service bind9 restart
-# dig @10.0.10.13 www.team01.com
+# dig @10.0.10.13 www.team00.com
+```
+```
+; <<>> DiG 9.11.3-1ubuntu1.7-Ubuntu <<>> @10.0.10.13 www.team00.com
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 35881
+;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 1, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+; COOKIE: f032e4c0f92d6f80f22195125d05d942a3b657deb8a8a4a0 (good)
+;; QUESTION SECTION:
+;www.team00.com.                        IN      A
+
+;; ANSWER SECTION:
+www.team00.com.         60      IN      A       10.0.10.12
+
+;; AUTHORITY SECTION:
+team00.com.             60      IN      NS      ns.team00.com.
+
+;; Query time: 2 msec
+;; SERVER: 10.0.10.13#53(10.0.10.13)
+;; WHEN: Sun Jun 16 05:53:06 UTC 2019
+;; MSG SIZE  rcvd: 104
 ```
 
-## LXC Setup Continued
+
+## Attacker Server
 ---
-### Network Setup
+
+### Host Setup
 Create the attacker server and assign it an IP address
 ```
 # lxc init sadImg atkSvr
@@ -351,16 +460,13 @@ Create the attacker server and assign it an IP address
 # lxc config device set atkSvr eth0 ipv4.address 10.0.10.14
 ```
 
-## local Server
----
-### Environment Setup
-
 Start and Attach the attacker Server
 ```
 # lxc start atkSvr
 # lxc exec atkSvr -- /bin/bash
 ```
 
+### Guest Setup
 Give root password (**_Not Safe_**)
 ```
 # passwd
@@ -372,17 +478,50 @@ Give root password (**_Not Safe_**)
 
 Host local Zone (File Content in bind9.conf.d)
 ```
+# mkdir /etc/bind/zones
 # vim /etc/bind/db.attack
-# vim /etc/bind/db.success
+# vim /etc/bind/zones/team00.com
+# vim /etc/bind/named.conf.team-zones
 # vim /etc/bind/named.conf.default-zones
 # vim /etc/bind/named.conf.options
+# echo 'include "/etc/bind/named.conf.team-zones";' >> /etc/bind/named.conf
 ```
 
 Restart bind9 and dig result
 ```
 # service bind9 restart
-# dig @10.0.10.14 www.team01.com
+# dig @10.0.10.14 www.team00.com
 ```
+```
+; <<>> DiG 9.11.3-1ubuntu1.7-Ubuntu <<>> @10.0.10.14 www.team00.com
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 56207
+;; flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 1, ADDITIONAL: 2
+;; WARNING: recursion requested but not available
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+; COOKIE: 30ea5733824537d90383d1e85d05de6ca382e5a5bf804da9 (good)
+;; QUESTION SECTION:
+;www.team00.com.                        IN      A
+
+;; ANSWER SECTION:
+www.team00.com.         60      IN      A       10.0.10.14
+
+;; AUTHORITY SECTION:
+team00.com.             60      IN      NS      ns.attacker32.com.
+
+;; ADDITIONAL SECTION:
+ns.attacker32.com.      60      IN      A       10.0.10.14
+
+;; Query time: 0 msec
+;; SERVER: 10.0.10.14#53(10.0.10.14)
+;; WHEN: Sun Jun 16 06:15:08 UTC 2019
+;; MSG SIZE  rcvd: 131
+```
+
 
 
 # Useful Commands
@@ -394,6 +533,7 @@ Check bind9 status
 
 LXC Operation
 ```
+# lxc start --all
 # lxc stop --all
 ```
 
@@ -404,10 +544,6 @@ Restart network interface
 ```
 
 
-
-
-
-**DELETE dingo image after finish**
 
 **REMOVE iptables masqurade after finish**
 
@@ -433,3 +569,4 @@ Use Vagrant for fully automated deploy
 
 https://www.vagrantup.com/intro/getting-started/
 
+Which address should be used for success attack?
