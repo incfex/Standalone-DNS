@@ -534,12 +534,14 @@ Generate Vagrantfile
 ```
 $ vagrant init
 ```
+
 Edit the generated Vagrantfile
 ```
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
+  config.vm.box = "package"
   config.vm.box_url = "file://package.box"
   config.vm.box_check_update = false
     config.ssh.password = "dees"
@@ -575,6 +577,14 @@ Vagrant.configure("2") do |config|
 end
 ```
 
+Start the VM and ssh into it
+```
+$ vagrant up
+$ vagrant ssh
+```
+
+
+
 
 
 
@@ -586,7 +596,7 @@ Check bind9 status
 # systemctl status bind9
 ```
 
-LXC Operation
+LXC Operations
 ```
 # lxc start --all
 # lxc stop --all
@@ -596,6 +606,13 @@ Restart network interface
 ```
 # ifdown eth0
 # ifup eth0
+```
+
+Vagrant Operations
+```
+$ vagrant up
+$ vagrant ssh
+$ vagrant destroy
 ```
 
 
