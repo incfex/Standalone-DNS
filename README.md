@@ -259,7 +259,7 @@ Give root password (**_Not Safe_**)
 
 ### Bind9 Config
 
-Host .com Zone (File Content in bind9.conf.d)
+Host team Zone (File Content in bind9.conf.d)
 ```
 # vim /etc/bind/db.team01.com
 # vim /etc/bind/db.10.0.10
@@ -297,6 +297,48 @@ ns.team01.com.          60      IN      A       10.0.10.12
 ;; SERVER: 10.0.10.12#53(10.0.10.12)
 ;; WHEN: Sat Jun 15 17:26:16 UTC 2019
 ;; MSG SIZE  rcvd: 100
+```
+
+## LXC Setup Continued
+---
+### Network Setup
+Create the local server and assign it an IP address
+```
+# lxc init sadImg locSvr
+# lxc network attach lxdbr0 locSvr eth0
+# lxc config device set locSvr eth0 ipv4.address 10.0.10.13
+```
+
+## local Server
+---
+### Environment Setup
+
+Start and Attach the local Server
+```
+# lxc start locSvr
+# lxc exec locSvr -- /bin/bash
+```
+
+Give root password (**_Not Safe_**)
+```
+# passwd
+# New password: toor
+# Retype new password: toor
+```
+
+### Bind9 Config
+
+Host local Zone (File Content in bind9.conf.d)
+```
+# vim /etc/bind/root.hint
+# vim /etc/bind/named.conf.default-zones
+# vim /etc/bind/named.conf.options
+```
+
+Restart bind9 and dig result
+```
+# service bind9 restart
+# dig @10.0.10.12 team01.com NS
 ```
 
 

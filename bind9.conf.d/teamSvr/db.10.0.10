@@ -1,5 +1,5 @@
 $TTL 60
-10.0.10.in-addr.arpa.   IN      SOA     a.gtld-seed.com.        hostmaster.seed.com. (
+10.0.10.in-addr.arpa.   IN      SOA     ns.team01.com.        admin.team01.com. (
                               2         ; Serial
                              60         ; Refresh
                              60         ; Retry
@@ -8,4 +8,4 @@ $TTL 60
 ;
 @       IN      NS      ns.team01.com.
 12      IN      PTR     ns.team01.com.
-12      IN      PTR     www.team01.com.
+12      IN      PTR     team01.com.

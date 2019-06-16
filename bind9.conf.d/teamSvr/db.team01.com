@@ -8,6 +8,4 @@ $TTL    60
                              60 )       ; Negative Cache TTL
 ;
 @       IN      NS      ns.team01.com.
-@       IN      A       10.0.10.12
-ns      IN      A       10.0.10.12
-www     IN      A       10.0.10.12
+*       IN      A       10.0.10.12
