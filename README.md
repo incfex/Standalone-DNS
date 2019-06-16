@@ -338,7 +338,50 @@ Host local Zone (File Content in bind9.conf.d)
 Restart bind9 and dig result
 ```
 # service bind9 restart
-# dig @10.0.10.12 team01.com NS
+# dig @10.0.10.13 www.team01.com
+```
+
+## LXC Setup Continued
+---
+### Network Setup
+Create the attacker server and assign it an IP address
+```
+# lxc init sadImg atkSvr
+# lxc network attach lxdbr0 atkSvr eth0
+# lxc config device set atkSvr eth0 ipv4.address 10.0.10.14
+```
+
+## local Server
+---
+### Environment Setup
+
+Start and Attach the attacker Server
+```
+# lxc start atkSvr
+# lxc exec atkSvr -- /bin/bash
+```
+
+Give root password (**_Not Safe_**)
+```
+# passwd
+# New password: toor
+# Retype new password: toor
+```
+
+### Bind9 Config
+
+Host local Zone (File Content in bind9.conf.d)
+```
+# vim /etc/bind/db.attack
+# vim /etc/bind/db.success
+# vim /etc/bind/named.conf.default-zones
+# vim /etc/bind/named.conf.options
+```
+
+Restart bind9 and dig result
+```
+# service bind9 restart
+# dig @10.0.10.14 www.team01.com
 ```
 
 
