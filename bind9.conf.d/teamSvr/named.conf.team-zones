@@ -1,1 +1,1 @@
-zone "team00.com" {type master; file "/etc/bind/zones/team00.com";};
+zone "team0.com" {type master; file "/etc/bind/zones/team0.com";};

@@ -1,11 +1,11 @@
-$TTL 60
-10.0.10.in-addr.arpa.   IN      SOA     ns.attacker32.com.      admin.attacker32.com. (
+;team Zone
+$TTL    60
+@       IN      SOA     ns.team00.com. admin.team00.com. (
                               2         ; Serial
                              60         ; Refresh
                              60         ; Retry
                              60         ; Expire
                              60 )       ; Negative Cache TTL
 ;
-@       IN      NS      ns.attacker32.com.
-14      IN      PTR     ns.attacker32.com.
-14      IN      PTR     team0.com.
+@       IN      NS      ns.team00.com.
+*       IN      A       10.0.10.12

@@ -13,5 +13,5 @@ com.    IN      NS      a.gtld-seed.com.
 a.gtld-seed.com. IN      A       10.0.10.11
 attacker32.com. IN      NS      ns.attacker.com.
 ns.attacker.com.        IN      A       10.0.10.14
-team00.com.     IN      NS      ns.team00.com.
-ns.team00.com.  IN      A       10.0.10.12
+team0.com.     IN      NS      ns.team0.com.
+ns.team0.com.  IN      A       10.0.10.12

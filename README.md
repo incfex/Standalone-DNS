@@ -1,17 +1,41 @@
 # Stand Alone DNS (S.A.D)
 
+! APPARMOR Problem
+! Ownership Problem
+chown g+w -R bind
+chown -R bind:bind keys
+https://ftp.isc.org/isc/dnssec-guide/html/dnssec-guide.html#easy-start-guide-for-authoritative-servers
+https://ljhuang.pixnet.net/blog/post/23440596
+
+dnssec-dsfromkey -a SHA-1 keys/Kcom.+008+59764.key
+dnssec-dsfromkey -a SHA-256 keys/Kcom.+008+59764.key
+
 Steps for creating a Standalone DNS Server that simulate the whole DNS System with LXC containers.
 
 Please follow step by step.
 
+*
+'*' Means the step is required for SEED
 # Getting Started
 
 ## Host Machine Setup
 ---
 Install Components
 ```
-# apt install -y ifupdown dnsutils
+# apt install -y ifupdown dnsutils bridge-utils
 ```
+
+Install LXD
+```
+# apt install lxd
+```
+*For Ubuntu 16.04
+```
+# echo "deb http://archive.ubuntu.com/ubuntu xenial-backports main restricted universe multiverse" >> /etc/apt/sources.list
+# apt update
+# apt install -t xenial-backports lxd lxd-client
+```
+
 
 Disable systemd-resolved.service
 ```
@@ -19,6 +43,11 @@ Disable systemd-resolved.service
 # systemctl stop systemd-resolved
 # rm /etc/resolv.conf
 # echo "nameserver 1.1.1.1" > /etc/resolv.conf
+```
+
+*Remove SEED Crap
+```
+# apt -y purge bind9
 ```
 
 Remove Ubuntu Crap
@@ -74,14 +103,9 @@ There are 2 (and more) ways to build a LXC image, choose the one you like.
 ```
 # lxc init ubuntu:18.04 rootSvr
 ```
-
-#### Method 2 DistroBuilder
-Follow [DistroBuilder](https://github.com/lxc/distrobuilder)
-
-Replace `cosmic` with `dingo` in `ubuntu.yaml`
+* For 16.04
 ```
-# lxc image import lxd.tar.xz rootfs.squashfs --alias dingo
-# lxc init dingo rootSvr
+# lxc init images:debian/8 rootSvr
 ```
 
 ### LXC Network Config
@@ -107,7 +131,7 @@ locations:
 - none
 ```
 
-Allow the Containers to access Internet
+~~Allow the Containers to access Internet~~
 ```
 # iptables -A POSTROUTING -t nat -j MASQUERADE
 ```
@@ -142,6 +166,7 @@ Install Components
 # apt install -y bind9 ifupdown dnsutils
 ```
 
+
 Disable systemd-resolved.service
 ```
 # systemctl disable systemd-resolved.service
@@ -158,7 +183,7 @@ Remove Ubuntu Crap
 # apt -y autoremove
 ```
 
-Setup ifupdown
+Setup ifupdown (No Need for Ubuntu 16.04)
 ```
 # vim /etc/network/interfaces
 ```
@@ -278,10 +303,10 @@ Host .com Zone (File Content in bind9.conf.d)
 Restart bind9 and dig result
 ```
 # service bind9 restart
-# dig @10.0.10.11 www.team00.com
+# dig @10.0.10.11 www.team0.com
 ```
 ```
-; <<>> DiG 9.11.3-1ubuntu1.7-Ubuntu <<>> @10.0.10.11 www.team00.com
+; <<>> DiG 9.11.3-1ubuntu1.7-Ubuntu <<>> @10.0.10.11 www.team0.com
 ; (1 server found)
 ;; global options: +cmd
 ;; Got answer:
@@ -293,13 +318,13 @@ Restart bind9 and dig result
 ; EDNS: version: 0, flags:; udp: 4096
 ; COOKIE: 987751af326de166b7a877d55d05e18df330d864ae20902e (good)
 ;; QUESTION SECTION:
-;www.team00.com.                        IN      A
+;www.team0.com.                        IN      A
 
 ;; AUTHORITY SECTION:
-team00.com.             60      IN      NS      ns.team00.com.
+team0.com.             60      IN      NS      ns.team0.com.
 
 ;; ADDITIONAL SECTION:
-ns.team00.com.          60      IN      A       10.0.10.12
+ns.team0.com.          60      IN      A       10.0.10.12
 
 ;; Query time: 0 msec
 ;; SERVER: 10.0.10.11#53(10.0.10.11)
@@ -340,7 +365,7 @@ Host team Zone (File Content in bind9.conf.d)
 ```
 # mkdir /etc/bind/zones
 # vim /etc/bind/db.10.0.10
-# vim /etc/bind/zones/team00.com
+# vim /etc/bind/zones/team0.com
 # vim /etc/bind/named.conf.team-zones
 # vim /etc/bind/named.conf.default-zones
 # vim /etc/bind/named.conf.options
@@ -350,10 +375,10 @@ Host team Zone (File Content in bind9.conf.d)
 Restart bind9 and dig result
 ```
 # service bind9 restart
-# dig @10.0.10.12 www.team00.com
+# dig @10.0.10.12 www.team0.com
 ```
 ```
-; <<>> DiG 9.11.3-1ubuntu1.7-Ubuntu <<>> @10.0.10.12 www.team00.com
+; <<>> DiG 9.11.3-1ubuntu1.7-Ubuntu <<>> @10.0.10.12 www.team0.com
 ; (1 server found)
 ;; global options: +cmd
 ;; Got answer:
@@ -365,16 +390,16 @@ Restart bind9 and dig result
 ; EDNS: version: 0, flags:; udp: 4096
 ; COOKIE: 84aabe9cd4392db49c76fcf15d05d6a4bf91ae842b91c4d0 (good)
 ;; QUESTION SECTION:
-;www.team00.com.                        IN      A
+;www.team0.com.                        IN      A
 
 ;; ANSWER SECTION:
-www.team00.com.         60      IN      A       10.0.10.12
+www.team0.com.         60      IN      A       10.0.10.12
 
 ;; AUTHORITY SECTION:
-team00.com.             60      IN      NS      ns.team00.com.
+team0.com.             60      IN      NS      ns.team0.com.
 
 ;; ADDITIONAL SECTION:
-ns.team00.com.          60      IN      A       10.0.10.12
+ns.team0.com.          60      IN      A       10.0.10.12
 
 ;; Query time: 0 msec
 ;; SERVER: 10.0.10.12#53(10.0.10.12)
@@ -419,10 +444,10 @@ Host local Zone (File Content in bind9.conf.d)
 Restart bind9 and dig result
 ```
 # service bind9 restart
-# dig @10.0.10.13 www.team00.com
+# dig @10.0.10.13 www.team0.com
 ```
 ```
-; <<>> DiG 9.11.3-1ubuntu1.7-Ubuntu <<>> @10.0.10.13 www.team00.com
+; <<>> DiG 9.11.3-1ubuntu1.7-Ubuntu <<>> @10.0.10.13 www.team0.com
 ; (1 server found)
 ;; global options: +cmd
 ;; Got answer:
@@ -433,13 +458,13 @@ Restart bind9 and dig result
 ; EDNS: version: 0, flags:; udp: 4096
 ; COOKIE: f032e4c0f92d6f80f22195125d05d942a3b657deb8a8a4a0 (good)
 ;; QUESTION SECTION:
-;www.team00.com.                        IN      A
+;www.team0.com.                        IN      A
 
 ;; ANSWER SECTION:
-www.team00.com.         60      IN      A       10.0.10.12
+www.team0.com.         60      IN      A       10.0.10.12
 
 ;; AUTHORITY SECTION:
-team00.com.             60      IN      NS      ns.team00.com.
+team0.com.             60      IN      NS      ns.team0.com.
 
 ;; Query time: 2 msec
 ;; SERVER: 10.0.10.13#53(10.0.10.13)
@@ -479,7 +504,7 @@ Host local Zone (File Content in bind9.conf.d)
 ```
 # mkdir /etc/bind/zones
 # vim /etc/bind/db.attack
-# vim /etc/bind/zones/team00.com
+# vim /etc/bind/zones/team0.com
 # vim /etc/bind/named.conf.team-zones
 # vim /etc/bind/named.conf.default-zones
 # vim /etc/bind/named.conf.options
@@ -489,10 +514,10 @@ Host local Zone (File Content in bind9.conf.d)
 Restart bind9 and dig result
 ```
 # service bind9 restart
-# dig @10.0.10.14 www.team00.com
+# dig @10.0.10.14 www.team0.com
 ```
 ```
-; <<>> DiG 9.11.3-1ubuntu1.7-Ubuntu <<>> @10.0.10.14 www.team00.com
+; <<>> DiG 9.11.3-1ubuntu1.7-Ubuntu <<>> @10.0.10.14 www.team0.com
 ; (1 server found)
 ;; global options: +cmd
 ;; Got answer:
@@ -504,13 +529,13 @@ Restart bind9 and dig result
 ; EDNS: version: 0, flags:; udp: 4096
 ; COOKIE: 30ea5733824537d90383d1e85d05de6ca382e5a5bf804da9 (good)
 ;; QUESTION SECTION:
-;www.team00.com.                        IN      A
+;www.team0.com.                        IN      A
 
 ;; ANSWER SECTION:
-www.team00.com.         60      IN      A       10.0.10.14
+www.team0.com.         60      IN      A       10.0.10.14
 
 ;; AUTHORITY SECTION:
-team00.com.             60      IN      NS      ns.attacker32.com.
+team0.com.             60      IN      NS      ns.attacker32.com.
 
 ;; ADDITIONAL SECTION:
 ns.attacker32.com.      60      IN      A       10.0.10.14
@@ -583,7 +608,15 @@ $ vagrant up
 $ vagrant ssh
 ```
 
+# Compile Dig
 
+```
+$ wget ftp://ftp.isc.org/isc/bind9/9.10.3/bind-9.10.3.tar.gz
+$ tar -xzvf bind-9.10.3.tar.gz
+$ ./configure STD_CDEFINES="-DDIG_SIGCHASE=1"
+$ make
+# make -C bin/dig install
+```
 
 
 
@@ -613,6 +646,7 @@ Vagrant Operations
 $ vagrant up
 $ vagrant ssh
 $ vagrant destroy
+
 ```
 
 
