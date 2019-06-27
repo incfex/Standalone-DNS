@@ -8,7 +8,12 @@ https://ftp.isc.org/isc/dnssec-guide/html/dnssec-guide.html#easy-start-guide-for
 https://ljhuang.pixnet.net/blog/post/23440596
 
 dnssec-dsfromkey -a SHA-1 keys/Kcom.+008+59764.key
-dnssec-dsfromkey -a SHA-256 keys/Kcom.+008+59764.key
+dnssec-dsfromkey -a SHA-256 keys/Kcom.+008+59764.keyg
+
+clear journel
+du -sh /var/cache/apt
+journalctl --vacuum-size=200M
+history -c
 
 Steps for creating a Standalone DNS Server that simulate the whole DNS System with LXC containers.
 
