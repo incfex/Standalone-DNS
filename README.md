@@ -1,26 +1,11 @@
 # Stand Alone DNS (S.A.D)
 
-! APPARMOR Problem
-! Ownership Problem
-chown g+w -R bind
-chown -R bind:bind keys
-https://ftp.isc.org/isc/dnssec-guide/html/dnssec-guide.html#easy-start-guide-for-authoritative-servers
-https://ljhuang.pixnet.net/blog/post/23440596
-
-dnssec-dsfromkey -a SHA-1 keys/Kcom.+008+59764.key
-dnssec-dsfromkey -a SHA-256 keys/Kcom.+008+59764.keyg
-
-clear journel
-du -sh /var/cache/apt
-journalctl --vacuum-size=200M
-history -c
-
 Steps for creating a Standalone DNS Server that simulate the whole DNS System with LXC containers.
 
 Please follow step by step.
 
 *
-'*' Means the step is required for SEED
+'*' Means the step is only needed for Ubuntu
 # Getting Started
 
 ## Host Machine Setup
@@ -50,7 +35,7 @@ Disable systemd-resolved.service
 # echo "nameserver 1.1.1.1" > /etc/resolv.conf
 ```
 
-*Remove SEED Crap
+*Remove bind9 on host to free port 53
 ```
 # apt -y purge bind9
 ```
@@ -98,19 +83,12 @@ What IPv4 address should be used? (CIDR subnet notation, “auto” or “none�
 What IPv6 address should be used? (CIDR subnet notation, “auto” or “none”) [default=auto]: none
 Would you like LXD to be available over the network? (yes/no) [default=no]:
 Would you like stale cached images to be updated automatically? (yes/no) [default=yes] no
-Would you like a YAML "lxd init" preseed to be printed? (yes/no) [default=no]: yes
+Would you like a YAML "lxd init" preseed to be printed? (yes/no) [default=no]: 
 ```
 
 ### Create new Ubuntu LXC image
-There are 2 (and more) ways to build a LXC image, choose the one you like.
-
-#### Method 1 LXD
 ```
-# lxc init ubuntu:18.04 rootSvr
-```
-* For 16.04
-```
-# lxc init images:debian/8 rootSvr
+# lxc init images:debian/9 rootSvr
 ```
 
 ### LXC Network Config
@@ -136,11 +114,6 @@ locations:
 - none
 ```
 
-~~Allow the Containers to access Internet~~
-```
-# iptables -A POSTROUTING -t nat -j MASQUERADE
-```
-
 
 ## Root Server
 ---
@@ -159,12 +132,6 @@ Start and Attach the Root Server
 ```
 
 ### Guest Setup
-Give root password (**_Not Safe_**)
-```
-# passwd
-New password: toor
-Retype new password: toor
-```
 
 Install Components
 ```
@@ -178,14 +145,6 @@ Disable systemd-resolved.service
 # systemctl stop systemd-resolved
 # rm /etc/resolv.conf
 # echo "nameserver 1.1.1.1" > /etc/resolv.conf
-```
-
-Remove Ubuntu Crap
-```
-# apt purge -y netplan.io
-# rm -r /etc/netplan
-# apt purge -y networkd-dispatcher
-# apt -y autoremove
 ```
 
 Setup ifupdown (No Need for Ubuntu 16.04)
@@ -262,11 +221,11 @@ Publish the root server as a image for future containers
 ```
 # lxc publish rootSvr --alias=sadImg --force
 ```
-Check the fingerprint of the vanilla ubuntu image
+Check the fingerprint of the vanilla debian image
 ```
 lxc image list
 ```
-Remove the vanilla ubuntu image
+Remove the vanilla debian image
 ```
 lxc image delete <fingerprint>
 ```
@@ -285,14 +244,6 @@ Start and Attach the .com Server
 ```
 # lxc start comSvr
 # lxc exec comSvr -- /bin/bash
-```
-
-### Guest Setup
-Give root password (**_Not Safe_**)
-```
-# passwd
-New password: toor
-Retype new password: toor
 ```
 
 ### Bind9 Config
@@ -357,12 +308,6 @@ Start and Attach the team Server
 # lxc exec teamSvr -- /bin/bash
 ```
 
-Give root password (**_Not Safe_**)
-```
-# passwd
-New password: toor
-Retype new password: toor
-```
 
 ### Bind9 Config
 
@@ -429,14 +374,6 @@ Start and Attach the local Server
 # lxc exec locSvr -- /bin/bash
 ```
 
-### Guest Setup
-Give root password (**_Not Safe_**)
-```
-# passwd
-New password: toor
-Retype new password: toor
-```
-
 ### Bind9 Config
 
 Host local Zone (File Content in bind9.conf.d)
@@ -493,14 +430,6 @@ Start and Attach the attacker Server
 ```
 # lxc start atkSvr
 # lxc exec atkSvr -- /bin/bash
-```
-
-### Guest Setup
-Give root password (**_Not Safe_**)
-```
-# passwd
-# New password: toor
-# Retype new password: toor
 ```
 
 ### Bind9 Config
@@ -654,11 +583,18 @@ $ vagrant destroy
 
 ```
 
+Get DS from key
+```
+dnssec-dsfromkey -a SHA-1 keys/Kcom.+008+59764.key
+dnssec-dsfromkey -a SHA-256 keys/Kcom.+008+59764.keyg
+```
 
 
 **REMOVE iptables masqurade after finish**
 
 # Reference
+
+[DNSSEC](https://ftp.isc.org/isc/dnssec-guide/html/dnssec-guide.html#easy-start-guide-for-authoritative-servers)
 
 [DistroBuilder](https://github.com/lxc/distrobuilder)
 
@@ -681,3 +617,19 @@ Use Vagrant for fully automated deploy
 https://www.vagrantup.com/intro/getting-started/
 
 Which address should be used for success attack?
+
+# Cautions
+1. APPARMOR Problem
+   https://ljhuang.pixnet.net/blog/post/23440596
+2. Ownership Problem
+  chown g+w -R /etc/bind
+  chown -R bind:bind /etc/bind/keys
+
+Commands to clear excess files before publish image
+```
+clear journel
+du -sh /var/cache/apt
+apt-get clean
+journalctl --vacuum-size=200M
+history -c
+```
